@@ -3,6 +3,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { useAuth } from "@/contexts/auth-context";
+
 type HeroHeaderProps = {
   leftLabel?: ReactNode;
   rightLabel?: ReactNode;
@@ -21,6 +23,10 @@ export function HeroHeader({
   rightHref = "/archive",
   className = "",
 }: HeroHeaderProps) {
+  const { session } = useAuth();
+  const resolvedLeft = leftHref ?? "/";
+  const resolvedRight = session ? rightHref ?? "/archive" : "/login";
+
   return (
     <div
       className={[
@@ -31,13 +37,13 @@ export function HeroHeader({
         .join(" ")}
     >
       <Link
-        href={leftHref}
+        href={resolvedLeft}
         className={`${baseButton} bg-black/50 text-white hover:border-white/30`}
       >
         {leftLabel}
       </Link>
       <Link
-        href={rightHref}
+        href={resolvedRight}
         className={`${baseButton} bg-black/40 text-[#ff8a9a] hover:border-white/30`}
       >
         {rightLabel}

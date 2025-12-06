@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { HeroHeader } from "@/components/mobile/hero-header";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useAuth } from "@/contexts/auth-context";
 
 const baseFooterLinks = ["피크타임 공유하기", "이용약관", "개인정보 보호정책", "문의하기"];
 
@@ -21,29 +21,18 @@ export function HeroShell({
   footerLinks = baseFooterLinks,
   header,
 }: HeroShellProps) {
-  const supabase = createSupabaseBrowserClient();
+  const { session, signOut } = useAuth();
   const [hasSession, setHasSession] = useState(false);
-  const links = hasSession ? [...footerLinks, "로그아웃"] : footerLinks;
+  const computedLinks: string[] = footerLinks ?? baseFooterLinks;
+  const links = hasSession ? [...computedLinks, "로그아웃"] : computedLinks;
 
   useEffect(() => {
-    const check = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setHasSession(Boolean(session));
-    };
-    void check();
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setHasSession(Boolean(session));
-    });
-    return () => subscription.unsubscribe();
-  }, [supabase]);
+    setHasSession(Boolean(session));
+  }, [session]);
 
   const handleFooterClick = async (label: string) => {
     if (label !== "로그아웃") return;
-    await supabase.auth.signOut();
+    await signOut();
     if (typeof window !== "undefined") {
       window.location.href = "/login";
     }

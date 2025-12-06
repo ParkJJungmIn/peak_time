@@ -1,82 +1,35 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Provider } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 import { HeroShell } from "@/components/layouts/hero-shell";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { useAuth } from "@/contexts/auth-context";
+import { useWebViewGuard } from "@/hooks/use-webview-guard";
 
 const providers: Array<{ name: string; provider: Provider; icon?: React.ReactNode }> = [
   { name: "Google 로그인", provider: "google" },
 ];
 
-const detectWebView = (ua: string) =>
-  /FBAN|FBAV|Instagram|KAKAOTALK|NAVER|Line|WebView|wv/i.test(ua);
-
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = useMemo(() => createSupabaseBrowserClient(), []);
+  const { supabase, session } = useAuth();
+  const { isWebView, openExternal } = useWebViewGuard();
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [isWebView, setIsWebView] = useState(false);
 
   useEffect(() => {
-    const loadSession = async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        setStatusMessage(error.message);
-        return;
-      }
-
-      if (session?.user?.email) {
-        setSessionEmail(session.user.email);
-        setStatusMessage("이미 로그인 상태입니다.");
-      }
-    };
-
-    void loadSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user?.email) {
-        setSessionEmail(session.user.email);
-        setStatusMessage("로그인에 성공했습니다.");
-        router.replace("/");
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [router, supabase]);
-
-  useEffect(() => {
-    const ua = typeof window !== "undefined" ? navigator.userAgent : "";
-    setIsWebView(detectWebView(ua));
-  }, []);
+    if (session?.user?.email) {
+      setSessionEmail(session.user.email);
+      setStatusMessage("이미 로그인 상태입니다.");
+      router.replace("/");
+    }
+  }, [router, session]);
 
   const handleOpenExternal = () => {
-    const ua = typeof window !== "undefined" ? navigator.userAgent : "";
-    const url = typeof window !== "undefined" ? window.location.href.replace(/^http:/, "https:") : "";
-
-    if (/android/i.test(ua) && url) {
-      window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
-      setTimeout(() => {
-        window.location.href = url;
-      }, 800);
-      return;
-    }
-
-    if (url) {
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
+    openExternal();
   };
 
   const handleOAuth = useCallback(

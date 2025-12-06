@@ -11,12 +11,16 @@ const providers: Array<{ name: string; provider: Provider; icon?: React.ReactNod
   { name: "Google 로그인", provider: "google" },
 ];
 
+const detectWebView = (ua: string) =>
+  /FBAN|FBAV|Instagram|KAKAOTALK|NAVER|Line|WebView|wv/i.test(ua);
+
 export default function LoginPage() {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
+  const [isWebView, setIsWebView] = useState(false);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -52,6 +56,28 @@ export default function LoginPage() {
       subscription.unsubscribe();
     };
   }, [router, supabase]);
+
+  useEffect(() => {
+    const ua = typeof window !== "undefined" ? navigator.userAgent : "";
+    setIsWebView(detectWebView(ua));
+  }, []);
+
+  const handleOpenExternal = () => {
+    const ua = typeof window !== "undefined" ? navigator.userAgent : "";
+    const url = typeof window !== "undefined" ? window.location.href.replace(/^http:/, "https:") : "";
+
+    if (/android/i.test(ua) && url) {
+      window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end`;
+      setTimeout(() => {
+        window.location.href = url;
+      }, 800);
+      return;
+    }
+
+    if (url) {
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+  };
 
   const handleOAuth = useCallback(
     async (provider: Provider) => {
@@ -91,7 +117,6 @@ export default function LoginPage() {
     [supabase],
   );
 
-  const handleAuthorizationCheck = undefined;
 
   return (
     <HeroShell
@@ -125,7 +150,7 @@ export default function LoginPage() {
               key={provider}
               type="button"
               onClick={() => handleOAuth(provider)}
-              disabled={loadingProvider !== null}
+              disabled={loadingProvider !== null || isWebView}
               className="w-full flex items-center justify-center gap-3 rounded-[20px] bg-white text-slate-900 py-3.5 text-base font-semibold shadow-[0_12px_35px_rgba(0,0,0,0.25)] hover:bg-white/95 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
@@ -154,6 +179,19 @@ export default function LoginPage() {
             </button>
           ))}
         </section>
+
+        {isWebView && (
+          <div className="space-y-2 text-xs text-red-200">
+            <p>인앱/웹뷰에서는 Google 로그인이 차단될 수 있습니다.</p>
+            <button
+              type="button"
+              onClick={handleOpenExternal}
+              className="w-full rounded-xl bg-white text-black py-2 font-semibold"
+            >
+              브라우저에서 열기
+            </button>
+          </div>
+        )}
 
         <div className="space-y-2 text-xs text-white/60">
           <p>

@@ -50,8 +50,9 @@ export async function POST(request: NextRequest) {
       .map((answer) => ({
         questionId: Number(answer.questionId),
         answerText: String(answer.answerText ?? "").trim(),
-      }))
-      .filter((answer) => Number.isFinite(answer.questionId) && answer.answerText.length);
+        answerGroupId: answer.answerGroupId,
+    }))
+    .filter((answer) => Number.isFinite(answer.questionId) && answer.answerText.length);
 
     if (sanitized.length === 0) {
       return NextResponse.json(

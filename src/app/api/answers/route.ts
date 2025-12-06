@@ -88,9 +88,12 @@ export async function GET(request: NextRequest) {
         const bTime = b.answeredDate ? b.answeredDate.getTime() : 0;
         return bTime - aTime;
       })
-      .map(({ firstAnswerId: _ignored, ...group }) => ({
-        ...group,
+      .map((group) => ({
+        answerGroupId: group.answerGroupId,
         answeredDate: group.answeredDate ? group.answeredDate.toISOString() : null,
+        preview: group.preview,
+        questionText: group.questionText,
+        totalAnswers: group.totalAnswers,
       }));
 
     return NextResponse.json({ groups });

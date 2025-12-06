@@ -17,8 +17,6 @@ export default function LoginPage() {
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
-  const [authCheckMessage, setAuthCheckMessage] = useState<string>("");
-  const [checkingAuth, setCheckingAuth] = useState(false);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -93,49 +91,7 @@ export default function LoginPage() {
     [supabase],
   );
 
-  const handleAuthorizationCheck = useCallback(async () => {
-    setCheckingAuth(true);
-    setAuthCheckMessage("");
-
-    try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-
-      if (error) {
-        throw error;
-      }
-
-      if (!session) {
-        setAuthCheckMessage("세션이 없습니다. 다시 로그인해 주세요.");
-        return;
-      }
-
-      const response = await fetch("/api/auth/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken: session.access_token }),
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        setAuthCheckMessage(
-          payload?.error ?? "인가 확인에 실패했습니다. 관리자에게 문의하세요.",
-        );
-        return;
-      }
-
-      setAuthCheckMessage(`인가 확인 완료: ${payload.user.email ?? "알 수 없음"}`);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "인가 확인 중 오류가 발생했습니다.";
-      setAuthCheckMessage(message);
-    } finally {
-      setCheckingAuth(false);
-    }
-  }, [supabase]);
+  const handleAuthorizationCheck = undefined;
 
   return (
     <HeroShell
@@ -209,9 +165,6 @@ export default function LoginPage() {
           {statusMessage && <p className="text-red-300">{statusMessage}</p>}
           {sessionEmail && (
             <p className="text-emerald-300 text-xs">세션 이메일: {sessionEmail}</p>
-          )}
-          {authCheckMessage && (
-            <p className="text-emerald-200 text-xs">{authCheckMessage}</p>
           )}
         </div>
       </div>

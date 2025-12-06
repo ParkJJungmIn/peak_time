@@ -7,11 +7,11 @@ import { requireRequestUser } from "@/lib/auth/server";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { groupId?: string } },
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   try {
     const user = await requireRequestUser(request);
-    const groupId = params.groupId;
+    const { groupId } = await params;
 
     if (!groupId) {
       return NextResponse.json({ error: "groupId가 필요합니다." }, { status: 400 });
@@ -38,10 +38,13 @@ export async function GET(
       return NextResponse.json({ error: "해당 보관함 항목을 찾을 수 없습니다." }, { status: 404 });
     }
 
+    const rawDate = rows[0].answeredDate;
     const answeredDate =
-      typeof rows[0].answeredDate === "string"
-        ? rows[0].answeredDate
-        : rows[0].answeredDate?.toISOString() ?? null;
+      typeof rawDate === "string"
+        ? rawDate
+        : rawDate && typeof rawDate === "object" && "toISOString" in rawDate
+          ? (rawDate as Date).toISOString()
+          : null;
 
     return NextResponse.json({
       answerGroupId: groupId,
@@ -68,11 +71,11 @@ type UpdateAnswer = {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { groupId?: string } },
+  { params }: { params: Promise<{ groupId: string }> },
 ) {
   try {
     const user = await requireRequestUser(request);
-    const groupId = params.groupId;
+    const { groupId } = await params;
 
     if (!groupId) {
       return NextResponse.json({ error: "groupId가 필요합니다." }, { status: 400 });

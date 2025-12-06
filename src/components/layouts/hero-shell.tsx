@@ -50,8 +50,8 @@ export function HeroShell({
   };
 
   return (
-    <div className="min-h-dvh bg-[#f22127] flex justify-center items-stretch px-0 py-0 text-white">
-      <div className="relative w-full max-w-[430px] min-h-dvh  bg-gradient-to-b from-[#0d0d0f] to-[#040404] shadow-[0_25px_80px_rgba(255,39,34,0.65)] border border-white/5 flex flex-col overflow-hidden">
+    <div className="min-h-dvh flex justify-center items-stretch px-0 py-0 text-white">
+      <div className="relative w-full max-w-[430px] min-h-dvh  bg-gradient-to-b from-[#0d0d0f] to-[#040404]  border border-white/5 flex flex-col overflow-hidden">
         <div className="shrink-0 sticky top-0 z-20 rounded-t-[36px] bg-gradient-to-b from-[#0d0d0f] via-[#0d0d0f] to-transparent border-b border-white/10">
           {header ? (
             header

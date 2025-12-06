@@ -198,7 +198,8 @@ ${lines.join("\n\n")}`;
               : "";
 
       setInsight(text);
-      setInsightHtml(marked.parse(text ?? "", { breaks: true }));
+      const html = await marked.parse(text ?? "", { breaks: true });
+      setInsightHtml(typeof html === "string" ? html : String(html));
     } catch (error) {
       setInsightError(
         error instanceof Error ? error.message : "인사이트 생성 중 오류가 발생했습니다.",

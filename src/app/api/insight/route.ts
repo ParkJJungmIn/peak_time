@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+import { jsonError } from "@/lib/api/response";
+import { insightSchema } from "@/lib/api/validation";
+
 const FUNCTION_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL &&
   `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/openai-completion`;
@@ -9,22 +12,14 @@ const FUNCTION_KEY =
 
 export async function POST(request: Request) {
   if (!FUNCTION_URL) {
-    return NextResponse.json(
-      { error: "FUNCTION_URL이 설정되지 않았습니다." },
-      { status: 500 },
-    );
+    return jsonError("FUNCTION_URL이 설정되지 않았습니다.", 500);
   }
 
-  let prompt = "";
-  try {
-    const body = await request.json();
-    prompt = typeof body?.prompt === "string" ? body.prompt.trim() : "";
-  } catch {
-    prompt = "";
-  }
+  const body = (await request.json().catch(() => ({}))) as unknown;
+  const parsed = insightSchema.safeParse(body);
 
-  if (!prompt) {
-    return NextResponse.json({ error: "prompt가 필요합니다." }, { status: 400 });
+  if (!parsed.success) {
+    return jsonError(parsed.error.errors[0]?.message ?? "prompt가 필요합니다.", 400);
   }
 
   try {
@@ -35,7 +30,7 @@ export async function POST(request: Request) {
         apikey: FUNCTION_KEY,
         Authorization: `Bearer ${FUNCTION_KEY}`,
       },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt: parsed.data.prompt }),
     });
 
     const data = await response.json().catch(() => ({}));
@@ -46,11 +41,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "인사이트 생성 중 오류가 발생했습니다.",
-      },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : "인사이트 생성 중 오류가 발생했습니다.",
+      500,
     );
   }
 }

@@ -23,8 +23,8 @@ export function HeroShell({
 }: HeroShellProps) {
   const { session, signOut } = useAuth();
   const [hasSession, setHasSession] = useState(false);
-  const computedLinks: string[] = footerLinks ?? baseFooterLinks;
-  const links = hasSession ? [...computedLinks, "로그아웃"] : computedLinks;
+  const computedLinks: string[] = Array.isArray(footerLinks) ? footerLinks : baseFooterLinks;
+  const links: string[] = hasSession ? [...computedLinks, "로그아웃"] : [...computedLinks];
 
   useEffect(() => {
     setHasSession(Boolean(session));

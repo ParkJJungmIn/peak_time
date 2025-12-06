@@ -77,7 +77,7 @@ export default function LoginPage() {
       footerLinks={[
         "로그인 시 피크타임의 이용약관 및 개인정보 처리방침에 동의하게 됩니다.",
       ]}
-      header={' '}
+      header={undefined}
     >
       <div className="flex flex-col items-center text-center px-6 py-10 gap-10">
         <div className="space-y-3">

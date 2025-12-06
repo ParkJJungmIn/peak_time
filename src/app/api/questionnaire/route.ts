@@ -4,6 +4,8 @@ import { asc } from "drizzle-orm";
 import { getDb } from "@/db";
 import { questionItems, userAnswers } from "@/db/schema";
 import { requireRequestUser } from "@/lib/auth/server";
+import { jsonError } from "@/lib/api/response";
+import { answerInputSchema } from "@/lib/api/validation";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,45 +30,24 @@ export async function GET(request: NextRequest) {
   }
 }
 
-type AnswerPayload = {
-  questionId: number;
-  answerText: string;
-  answerGroupId?: string;
-};
-
 export async function POST(request: NextRequest) {
   try {
     const user = await requireRequestUser(request);
-    const body = (await request.json()) as { answers?: AnswerPayload[] };
+    const body = (await request.json()) as unknown;
+    const parsed = answerInputSchema.safeParse(body);
 
-    if (!body.answers || !Array.isArray(body.answers) || body.answers.length === 0) {
-      return NextResponse.json(
-        { error: "answers 배열이 필요합니다." },
-        { status: 400 },
-      );
+    if (!parsed.success) {
+      return jsonError(parsed.error.errors[0]?.message ?? "유효하지 않은 요청입니다.", 400);
     }
 
-    const sanitized = body.answers
-      .map((answer) => ({
-        questionId: Number(answer.questionId),
-        answerText: String(answer.answerText ?? "").trim(),
-        answerGroupId: answer.answerGroupId,
-    }))
-    .filter((answer) => Number.isFinite(answer.questionId) && answer.answerText.length);
-
-    if (sanitized.length === 0) {
-      return NextResponse.json(
-        { error: "유효한 질문/답변이 없습니다." },
-        { status: 400 },
-      );
-    }
+    const sanitized = parsed.data.answers.map((answer) => ({
+      questionId: answer.questionId,
+      answerText: answer.answerText,
+    }));
 
     const db = getDb();
 
-    const groupId =
-      body.answers[0]?.answerGroupId ??
-      sanitized[0]?.answerGroupId ??
-      crypto.randomUUID();
+    const groupId = crypto.randomUUID();
 
     await db.insert(userAnswers).values(
       sanitized.map((answer) => ({
@@ -83,6 +64,6 @@ export async function POST(request: NextRequest) {
       error instanceof Error
         ? error.message
         : "답변을 저장하는 중 오류가 발생했습니다.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return jsonError(message, 400);
   }
 }

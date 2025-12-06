@@ -4,6 +4,8 @@ import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { questionItems, userAnswers } from "@/db/schema";
 import { requireRequestUser } from "@/lib/auth/server";
+import { jsonError } from "@/lib/api/response";
+import { answerInputSchema } from "@/lib/api/validation";
 
 export async function GET(
   request: NextRequest,
@@ -14,12 +16,12 @@ export async function GET(
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json({ error: "groupId가 필요합니다." }, { status: 400 });
+      return jsonError("groupId가 필요합니다.", 400);
     }
 
     const db = getDb();
 
-    const rows = await db
+    const rows = (await db
       .select({
         answerId: userAnswers.id,
         questionId: userAnswers.questionId,
@@ -32,10 +34,16 @@ export async function GET(
       .where(
         and(eq(userAnswers.userId, user.id), eq(userAnswers.answerGroupId, groupId)),
       )
-      .orderBy(asc(userAnswers.id));
+      .orderBy(asc(userAnswers.id))) as Array<{
+        answerId: number;
+        questionId: number;
+        answerText: string;
+        answeredDate: string | Date | null;
+        questionText: string | null;
+      }>;
 
     if (!rows.length) {
-      return NextResponse.json({ error: "해당 보관함 항목을 찾을 수 없습니다." }, { status: 404 });
+      return jsonError("해당 보관함 항목을 찾을 수 없습니다.", 404);
     }
 
     const rawDate = rows[0].answeredDate;
@@ -60,14 +68,9 @@ export async function GET(
       error instanceof Error
         ? error.message
         : "보관함 상세를 불러오는 중 오류가 발생했습니다.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return jsonError(message, 400);
   }
 }
-
-type UpdateAnswer = {
-  questionId: number;
-  answerText: string;
-};
 
 export async function PUT(
   request: NextRequest,
@@ -78,28 +81,15 @@ export async function PUT(
     const { groupId } = await params;
 
     if (!groupId) {
-      return NextResponse.json({ error: "groupId가 필요합니다." }, { status: 400 });
+      return jsonError("groupId가 필요합니다.", 400);
     }
 
-    const body = (await request.json()) as { answers?: UpdateAnswer[] };
-
-    if (!body.answers || !Array.isArray(body.answers) || body.answers.length === 0) {
-      return NextResponse.json({ error: "answers 배열이 필요합니다." }, { status: 400 });
+    const body = (await request.json()) as unknown;
+    const parsed = answerInputSchema.safeParse(body);
+    if (!parsed.success) {
+      return jsonError(parsed.error.errors[0]?.message ?? "유효하지 않은 요청입니다.", 400);
     }
-
-    const updates = body.answers
-      .map((item) => ({
-        questionId: Number(item.questionId),
-        answerText: String(item.answerText ?? "").trim(),
-      }))
-      .filter((item) => Number.isFinite(item.questionId) && item.answerText.length);
-
-    if (!updates.length) {
-      return NextResponse.json(
-        { error: "유효한 질문/답변이 없습니다." },
-        { status: 400 },
-      );
-    }
+    const updates = parsed.data.answers;
 
     const db = getDb();
 
@@ -124,6 +114,6 @@ export async function PUT(
       error instanceof Error
         ? error.message
         : "보관함 내용을 수정하는 중 오류가 발생했습니다.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return jsonError(message, 400);
   }
 }

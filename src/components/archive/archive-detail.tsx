@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { marked } from "marked";
 
 import { HeroShell } from "@/components/layouts/hero-shell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { AnswerDetail } from "@/types/questionnaire";
+import { useInsight } from "@/hooks/use-insight";
 
 type State =
   | { status: "loading" }
@@ -36,10 +36,8 @@ export default function ArchiveDetail() {
   const [saving, setSaving] = useState(false);
   const [editAnswers, setEditAnswers] = useState<Record<number, string>>({});
   const [statusMessage, setStatusMessage] = useState("");
-  const [insight, setInsight] = useState<string>("");
-  const [insightHtml, setInsightHtml] = useState<string>("");
-  const [insightLoading, setInsightLoading] = useState(false);
-  const [insightError, setInsightError] = useState<string>("");
+  const { loading: insightLoading, error: insightError, text: insight, html: insightHtml, requestInsight } =
+    useInsight();
 
   useEffect(() => {
     const load = async () => {
@@ -72,9 +70,7 @@ export default function ArchiveDetail() {
         });
         const map: Record<number, string> = {};
         (payload.answers ?? []).forEach((a: AnswerDetail) => {
-          if (typeof a.questionId === "number") {
-            map[a.questionId] = a.answerText;
-          }
+          map[a.questionId] = a.answerText;
         });
         setEditAnswers(map);
       } catch (error) {
@@ -141,26 +137,14 @@ export default function ArchiveDetail() {
   const buildPrompt = () => {
     const lines = state.answers.map(
       (answer, idx) =>
-        `${idx + 1}. ${answer.questionText ?? "질문"}\n${editAnswers[answer.questionId] ?? answer.answerText}`,
+        `${idx + 1}. 질문: ${answer.questionText ?? "질문"}\n답변: ${
+          editAnswers[answer.questionId] ?? answer.answerText
+        }`,
     );
-    return `다음은 사용자가 평소 겪는 불편과 아이디어 메모입니다. 질문과 답변을 읽고, 불편의 유형/클러스터와 사업 아이템 가능성을 요약해 주세요. 형식은 아래 예시를 따르세요.
-
-예시 형식:
-이 불편은 "<클러스터>"에 속합니다.
-유사 불편이 반복되는 경우 사업 아이템 가능성이 높습니다.
-· 잠재 아이템: ...
-· 타깃: ...
-· 수익모델: ...
-
-질문/답변 목록:
-${lines.join("\n\n")}`;
+    return lines.join("\n\n");
   };
 
   const handleInsight = async () => {
-    setInsightError("");
-    setInsight("");
-    setInsightLoading(true);
-
     try {
       const {
         data: { session },
@@ -173,39 +157,14 @@ ${lines.join("\n\n")}`;
 
     const prompt = buildPrompt();
     if (!prompt.trim()) {
-      setInsightError("전송할 프롬프트가 없습니다.");
+      setStatusMessage("전송할 프롬프트가 없습니다.");
       return;
     }
-      const response = await fetch("/api/insight", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data?.error ?? "인사이트 생성에 실패했습니다.");
-      }
-
-      const text =
-        typeof data === "string"
-          ? data
-          : typeof data?.text === "string"
-            ? data.text
-            : data && typeof data === "object"
-              ? JSON.stringify(data)
-              : "";
-
-      setInsight(text);
-      const html = await marked.parse(text ?? "", { breaks: true });
-      setInsightHtml(typeof html === "string" ? html : String(html));
+    await requestInsight(prompt);
     } catch (error) {
-      setInsightError(
+      setStatusMessage(
         error instanceof Error ? error.message : "인사이트 생성 중 오류가 발생했습니다.",
       );
-    } finally {
-      setInsightLoading(false);
     }
   };
 

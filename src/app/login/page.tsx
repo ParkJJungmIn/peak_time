@@ -4,12 +4,11 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 import type { Provider } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
-import { MobileScreen } from "@/components/mobile/mobile-screen";
+import { HeroShell } from "@/components/layouts/hero-shell";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-const providers: Array<{ name: string; provider: Provider }> = [
-  { name: "Google로 계속하기", provider: "google" },
-  { name: "Kakao로 계속하기", provider: "kakao" },
+const providers: Array<{ name: string; provider: Provider; icon?: React.ReactNode }> = [
+  { name: "Google 로그인", provider: "google" },
 ];
 
 export default function LoginPage() {
@@ -64,7 +63,7 @@ export default function LoginPage() {
       try {
         const redirectTo =
           typeof window !== "undefined"
-            ? `${window.location.origin}/auth/callback`
+            ? `${window.location.origin}/`
             : undefined;
 
         const { error } = await supabase.auth.signInWithOAuth({
@@ -138,90 +137,84 @@ export default function LoginPage() {
     }
   }, [supabase]);
 
-  const headerRight = useMemo(
-    () => (
-      <button
-        type="button"
-        onClick={() => router.push("/questionnaire")}
-        className="rounded-full border border-white/15 px-3 py-1.5 text-xs font-semibold hover:border-white/40"
-      >
-        보관함
-      </button>
-    ),
-    [router],
-  );
-
   return (
-    <MobileScreen
-      header={{
-        leftSlot: (
-          <div>
-            <p className="text-lg font-semibold">Memo</p>
-            <p className="text-xs text-slate-400">당신의 생각 저장소</p>
-          </div>
-        ),
-        rightSlot: headerRight,
-      }}
+    <HeroShell
+      tagline={null}
+      footerLinks={[
+        "로그인 시 피크타임의 이용약관 및 개인정보 처리방침에 동의하게 됩니다.",
+      ]}
+      header={' '}
     >
-      <div className="space-y-8">
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.4em] text-slate-400">
-            Memo Project
-          </p>
-          <div>
-            <h1 className="text-3xl font-semibold">로그인</h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Kakao 또는 Google 계정으로 안전하게 로그인하세요.
-            </p>
+      <div className="flex flex-col items-center text-center px-6 py-10 gap-10">
+        <div className="space-y-3">
+          <div className="text-2xl font-semibold flex items-center justify-center gap-2">
+            <span>🔥</span>
+            <span>피크타임</span>
           </div>
+          <p className="text-sm text-white/60">
+            당신의 불편을 아이디어로 바꾸는 5분 루틴
+          </p>
         </div>
 
-        <section className="space-y-3">
+        <div className="space-y-4">
+          <h1 className="text-2xl font-bold">시작할 준비가 되셨나요?</h1>
+          <p className="text-base text-white/70 leading-relaxed">
+            일상의 불편을 기록하고,{"\n"}나만의 사업 아이디어 씨앗을 모아보세요.
+          </p>
+        </div>
+
+        <section className="w-full space-y-3">
           {providers.map(({ name, provider }) => (
             <button
               key={provider}
               type="button"
               onClick={() => handleOAuth(provider)}
               disabled={loadingProvider !== null}
-              className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white text-slate-900 py-3 font-medium hover:bg-white/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-3 rounded-[20px] bg-white text-slate-900 py-3.5 text-base font-semibold shadow-[0_12px_35px_rgba(0,0,0,0.25)] hover:bg-white/95 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
+              <svg
+                className="h-6 w-6"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  fill="#EA4335"
+                  d="M12 10.2v3.92h5.48c-.24 1.26-.98 2.33-2.08 3.04v2.54h3.36c1.97-1.82 3.1-4.5 3.1-7.7 0-.74-.07-1.45-.2-2.14z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 21c2.8 0 5.16-.92 6.88-2.5l-3.36-2.54c-.94.63-2.14 1-3.52 1-2.7 0-4.98-1.82-5.8-4.27H2.7v2.68C4.42 18.98 7.94 21 12 21z"
+                />
+                <path
+                  fill="#4A90E2"
+                  d="M6.2 12c0-.7.12-1.38.32-2.03V7.29H2.7A8.976 8.976 0 0 0 2 12c0 1.44.34 2.8.94 4.01L6.2 12z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M12 5.52c1.52 0 2.9.52 3.98 1.54l2.98-2.98C17.16 2.64 14.8 1.7 12 1.7 7.94 1.7 4.42 3.72 2.7 7.29l3.82 2.68C7.02 7.34 9.3 5.52 12 5.52z"
+                />
+              </svg>
               {loadingProvider === provider ? "연결 중…" : name}
             </button>
           ))}
         </section>
 
-        <section className="rounded-2xl border border-white/10 p-4 bg-slate-900/40 space-y-2">
-          <p className="text-sm font-semibold text-white">상태</p>
-          <p className="text-sm text-slate-300 min-h-[24px]">
-            {statusMessage || "아직 로그인되지 않았습니다."}
+        <div className="space-y-2 text-xs text-white/60">
+          <p>
+            로그인 시 피크타임의{" "}
+            <span className="text-indigo-300 font-semibold">이용약관</span> 및{" "}
+            <span className="text-indigo-300 font-semibold">개인정보 처리방침</span>에
+            동의하게 됩니다.
           </p>
+          {statusMessage && <p className="text-red-300">{statusMessage}</p>}
           {sessionEmail && (
-            <p className="text-xs text-emerald-400">세션 이메일: {sessionEmail}</p>
+            <p className="text-emerald-300 text-xs">세션 이메일: {sessionEmail}</p>
           )}
-        </section>
-
-        <section className="space-y-3">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-slate-400">인가 인증 확인</p>
-            <button
-              type="button"
-              onClick={handleAuthorizationCheck}
-              disabled={checkingAuth}
-              className="text-xs font-semibold text-emerald-300 hover:text-emerald-200 disabled:opacity-60"
-            >
-              {checkingAuth ? "확인 중…" : "확인하기"}
-            </button>
-          </div>
-          <div className="min-h-[48px] rounded-2xl border border-white/10 p-3 bg-slate-900/40 text-sm text-slate-200">
-            {authCheckMessage || "확인하기를 누르면 현재 세션의 인가를 검증합니다."}
-          </div>
-        </section>
-
-        <p className="text-xs text-center text-slate-500">
-          최초 로그인 시 Supabase 대시보드에서 Kakao/Google OAuth를 활성화하고
-          callback URL에 `https://YOUR_DOMAIN/auth/callback`을 등록하세요.
-        </p>
+          {authCheckMessage && (
+            <p className="text-emerald-200 text-xs">{authCheckMessage}</p>
+          )}
+        </div>
       </div>
-    </MobileScreen>
+    </HeroShell>
   );
 }

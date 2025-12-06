@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
 type AnswerPayload = {
   questionId: number;
   answerText: string;
+  answerGroupId?: string;
 };
 
 export async function POST(request: NextRequest) {
@@ -61,15 +62,21 @@ export async function POST(request: NextRequest) {
 
     const db = getDb();
 
+    const groupId =
+      body.answers[0]?.answerGroupId ??
+      sanitized[0]?.answerGroupId ??
+      crypto.randomUUID();
+
     await db.insert(userAnswers).values(
       sanitized.map((answer) => ({
         userId: user.id,
         questionId: answer.questionId,
         answerText: answer.answerText,
+        answerGroupId: groupId,
       })),
     );
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, answerGroupId: groupId });
   } catch (error) {
     const message =
       error instanceof Error

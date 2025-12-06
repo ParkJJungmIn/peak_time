@@ -32,4 +32,5 @@ export const userAnswers = pgTable("user_answers", {
   questionId: bigint("question_id", { mode: "number" }).notNull(),
   answerText: text("answer_text").notNull(),
   answeredDate: date("answered_date").defaultNow().notNull(),
+  answerGroupId: uuid("answer_group_id"),
 });

@@ -8,6 +8,7 @@ type HeroHeaderProps = {
   rightLabel?: ReactNode;
   leftHref?: string;
   rightHref?: string;
+  className?: string;
 };
 
 const baseButton =
@@ -17,10 +18,18 @@ export function HeroHeader({
   leftLabel = "🔥 피크타임",
   rightLabel = "보관함",
   leftHref = "/",
-  rightHref = "/questionnaire",
+  rightHref = "/archive",
+  className = "",
 }: HeroHeaderProps) {
   return (
-    <div className="flex items-center justify-between px-5 pt-5">
+    <div
+      className={[
+        "flex items-center justify-between px-5 pt-5 pb-4",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <Link
         href={leftHref}
         className={`${baseButton} bg-black/50 text-white hover:border-white/30`}

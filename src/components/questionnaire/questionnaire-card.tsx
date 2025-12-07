@@ -6,6 +6,7 @@ import { v4 as uuid } from "uuid";
 import type { Question } from "@/types/questionnaire";
 
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Surface } from "@/components/ui/surface";
 
 type CardState =
   | { status: "loading" }
@@ -165,7 +166,7 @@ export default function QuestionnaireCard() {
   if (state.status === "loading") {
     return (
       <section className="px-6 py-8 space-y-5">
-        <div className="rounded-[28px] bg-gradient-to-b from-[#1b1b1f] to-[#0f0f12] p-6 border border-white/5 animate-pulse h-48" />
+        <Surface className="p-6 animate-pulse h-48">{null}</Surface>
       </section>
     );
   }
@@ -173,9 +174,9 @@ export default function QuestionnaireCard() {
   if (state.status === "requires-login") {
     return (
       <section className="px-6 py-8">
-        <div className="rounded-[28px] bg-black/40 border border-white/5 p-6 text-center text-sm text-white/70 space-y-3">
+        <Surface tone="panel" className="p-6 text-center text-sm text-white/70 space-y-3">
           <p>질문을 시작하려면 로그인해주세요.</p>
-        </div>
+        </Surface>
       </section>
     );
   }
@@ -183,9 +184,9 @@ export default function QuestionnaireCard() {
   if (state.status === "empty") {
     return (
       <section className="px-6 py-8">
-        <div className="rounded-[28px] bg-black/40 border border-white/5 p-6 text-center text-sm text-white/70 space-y-3">
+        <Surface tone="panel" className="p-6 text-center text-sm text-white/70 space-y-3">
           등록된 질문이 없습니다.
-        </div>
+        </Surface>
       </section>
     );
   }
@@ -193,7 +194,7 @@ export default function QuestionnaireCard() {
   if (state.status === "submitted") {
     return (
       <section className="px-6 py-10">
-        <div className="rounded-[32px] bg-gradient-to-b from-[#121214] to-[#0b0b0d] p-8 border border-white/5 text-center space-y-6 shadow-[0_35px_80px_rgba(0,0,0,0.5)]">
+        <Surface tone="panel" className="p-8 text-center space-y-6">
           <div className="flex items-center justify-center">
             <div className="h-16 w-16 rounded-full bg-emerald-500 flex items-center justify-center text-3xl">
               ✓
@@ -222,7 +223,7 @@ export default function QuestionnaireCard() {
               보관함으로 이동
             </button>
           </div>
-        </div>
+        </Surface>
       </section>
     );
   }
@@ -242,7 +243,7 @@ export default function QuestionnaireCard() {
       <p className="text-xs uppercase tracking-[0.4em] text-white/40">
         Step {state.currentIndex + 1} / {state.totalQuestions}
       </p>
-      <div className="rounded-[28px] bg-gradient-to-b from-[#1b1b1f] to-[#0f0f12] p-6 space-y-5 border border-white/5 shadow-[0_35px_80px_rgba(0,0,0,0.5)]">
+      <Surface className="p-6 space-y-5">
         <div>
           <p className="text-xl font-semibold leading-snug">
             {state.currentQuestion.questionText}
@@ -288,7 +289,7 @@ export default function QuestionnaireCard() {
         >
           {state.currentIndex === state.totalQuestions - 1 ? "제출하기" : "다음 질문 →"}
         </button>
-      </div>
+      </Surface>
     </section>
   );
 }

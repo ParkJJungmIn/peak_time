@@ -155,12 +155,12 @@ export default function ArchiveDetail() {
         return;
       }
 
-    const prompt = buildPrompt();
-    if (!prompt.trim()) {
-      setStatusMessage("전송할 프롬프트가 없습니다.");
-      return;
-    }
-    await requestInsight(prompt);
+      const prompt = buildPrompt();
+      if (!prompt.trim()) {
+        setStatusMessage("전송할 프롬프트가 없습니다.");
+        return;
+      }
+      await requestInsight(prompt);
     } catch (error) {
       setStatusMessage(
         error instanceof Error ? error.message : "인사이트 생성 중 오류가 발생했습니다.",

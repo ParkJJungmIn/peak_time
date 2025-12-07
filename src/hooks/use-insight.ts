@@ -31,7 +31,12 @@ export function useInsight() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data?.error ?? "인사이트 생성에 실패했습니다.");
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: data?.error ?? "인사이트 생성에 실패했습니다.",
+        }));
+        return;
       }
 
       const text =
